@@ -24,8 +24,7 @@
   "homepage": "https://github.com/Genenenenaam/babel-concat-sourcemaps#readme",
   "dependencies": {
     "@babel/core": "^7.1.0",
-    "source-map": "^0.7.3",
-    "fs": "0.0.2"
+    "source-map": "^0.4.2"
   },
   "devDependencies": {
     "mocha": "^2.2.5"
