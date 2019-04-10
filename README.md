@@ -1,4 +1,4 @@
-# babel-concat
+# babel-concat-sourcemaps
 Use to concat JS files after babel transformation.
 
 The apis (see API) take a list of files (or blocks of code) instead of a single one and process all the list to return a babel-like object ({code:..., map:...}):
