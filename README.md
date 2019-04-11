@@ -9,7 +9,7 @@ The apis (see API) take a list of files (or blocks of code) instead of a single 
 Installation
 ============
 
-`npm install babel-concat`
+`npm install babel-concat-sourcemaps`
 
 ```js
 const concat = require("babel-concat-sourcemaps");
