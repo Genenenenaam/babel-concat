@@ -1,6 +1,6 @@
 {
   "name": "babel-concat-sourcemaps",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Use to concat JS files with sourcemaps after babel transformation",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/Genenenenaam/babel-concat-sourcemaps.git"
+    "url": "https://github.com/Genenenenaam/babel-concat-sourcemaps.git"
   },
   "keywords": [
     "babel",
