@@ -12,10 +12,10 @@ Installation
 `npm install babel-concat`
 
 ```js
-var concat = require("babel-concat")
+const concat = require("babel-concat-sourcemaps");
 
 Usage example :
-var rst = concat.transformFileSync([path1, path2, ..., pathN], options)
+const rst = concat.transformFileSync([path1, path2, ..., pathN], options)
 rst.code // returns the concatenation of file1, file2, ..., fileN after they have been processed by Babel
 rst.map // returns a source map, concatenation of the generated source-map of each file (only if the source-maps option has been set to true, inline or both => see babel documentation)
 ```
