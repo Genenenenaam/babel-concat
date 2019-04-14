@@ -191,7 +191,7 @@ exports.addSourceMapUrlData = function(code, map) {
     var mapString = map.toString();
     var mapBase64 = Buffer.from(mapString).toString("base64");
     var mapData = "//# " + "sourceMappingURL=data:application/json;base64," + mapBase64;
-    console.log(code + "\n" + mapData);
+
     return code + "\n" + mapData;
 };
 
