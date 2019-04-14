@@ -53,6 +53,9 @@ var processOptions = function(options, code) {
         if (rst.sourceMaps === "inline" || rst.sourceMaps === "both") {
             rst.sourceMaps = true;
         }
+
+        // 3. disable comments by default, hence soursemaps can't handle them
+        rst.comments = false;
     }
 
     return rst;
@@ -186,9 +189,9 @@ exports.babelConcat = function(babelResults, options) {
  */
 exports.addSourceMapUrlData = function(code, map) {
     var mapString = map.toString();
-    var mapBase64 = new Buffer(mapString).toString("base64");
+    var mapBase64 = Buffer.from(mapString).toString("base64");
     var mapData = "//# " + "sourceMappingURL=data:application/json;base64," + mapBase64;
-
+    console.log(code + "\n" + mapData);
     return code + "\n" + mapData;
 };
 

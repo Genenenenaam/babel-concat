@@ -14,7 +14,8 @@ describe("babel-concat", function() {
                 "test/files/File2.js",
                 "test/files/File3.js"
             ], {
-                sourceMaps: true
+                sourceMaps: true,
+                minified: true
             });
 
             assert(!!result);
