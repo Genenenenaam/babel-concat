@@ -1,11 +1,9 @@
 # babel-concat-sourcemaps
-Use to concat JS files after babel transformation.
+Use to concat JS files with sourcemap after babel transformation.
 
 The apis (see API) take a list of files (or blocks of code) instead of a single one and process all the list to return a babel-like object ({code:..., map:...}):
-- code attribute contains the concatenation of all compiled code blocks.
-- map attribute contains a source map object which is the concatenation of each source-map of each given file (or block of code). This is only available if you activated the source-map option.
-
-NOTE: The option `comments` for Babel is set to `false` by default, since source-maps can't handle these.
+- code attribute contains: The concatenation of all compiled code blocks. (Sourcemap is inlined if the source-maps option has been set to true)
+- map attribute contains: The RAW source map object which is the concatenation of each source-map of each given file (or block of code).
 
 
 Installation
@@ -18,8 +16,8 @@ const concat = require("babel-concat-sourcemaps");
 
 Usage example :
 const result = concat.transformFileSync([path1, path2, ..., pathN], options)
-result.code // returns the concatenation of file1, file2, ..., fileN after they have been processed by Babel with inline source-maps (only if the source-maps option has been set to true)
-result.map // returns a source map, concatenation of the generated source-map of each file (only if the source-maps option has been set to true)
+result.code // returns the concatenation of file1, file2, ..., fileN after they have been processed by Babel (Sourcemap is inlined if the source-maps option has been set to true)
+result.map // returns the RAW source map object which is the concatenation of each source-map of each given file (or block of code).
 ```
 
 API

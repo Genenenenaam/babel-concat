@@ -21,7 +21,6 @@ describe("babel-concat", function() {
             assert(!!result);
             assert(!!result.code);
             assert(!!result.map);
-            assert.equal(3, Object.keys(result.map._sourcesContents).length);
         });
 
     });
@@ -43,7 +42,6 @@ describe("babel-concat", function() {
             assert(!!result);
             assert(!!result.code);
             assert(!!result.map);
-            assert.equal(3, Object.keys(result.map._sourcesContents).length);
         });
     });
 
@@ -61,7 +59,6 @@ describe("babel-concat", function() {
                 assert(!!result);
                 assert(!!result.code);
                 assert(!!result.map);
-                assert.equal(3, Object.keys(result.map._sourcesContents).length);
             });
         });
     });

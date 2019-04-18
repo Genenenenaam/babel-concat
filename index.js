@@ -1,206 +1,152 @@
 "use strict";
 
-var sourceMap = require("source-map");
-var babel = require("@babel/core");
 
-var SourceMapGenerator = sourceMap.SourceMapGenerator;
-var SourceMapConsumer = sourceMap.SourceMapConsumer;
+/* imports
+---------------------------------------------*/
+const sourceMap = require("source-map");
+const babel = require("@babel/core");
+const SourceMapConsumer = sourceMap.SourceMapConsumer;
+const SourceNode = sourceMap.SourceNode;
 
-var nonceVal = Date.now();
-var nonce = function() {
+
+
+/* Date filename
+---------------------------------------------*/
+let nonceVal = Date.now();
+let nonce = function() {
     return nonceVal++;
 };
 
-/**
- * When concatenating multiple source map, each one need to have a specific source name,
- * otherwize it will the last source will erase the previous ones.
- * @param   {String} sourceFileName source file name original from options
- * @param   {String} code           code associated
- * @returns {String} a generated source file name unique form each codes
- */
-var processSourceFileName = function(sourceFileName, code) {
+
+
+/* processSourceFileName
+---------------------------------------------*/
+let processSourceFileName = function(sourceFileName, code) {
 
     // If we're processing a block of code,
     // let's try to find a class name in the block to specify the sourceFileName
 
-    var re = /class\s?([^\s]+)(\s?{|\s.*)|\s([^\s]+)\s?=\s?class/;
-    var m = re.exec(code);
+    let re = /class\s?([^\s]+)(\s?{|\s.*)|\s([^\s]+)\s?=\s?class/;
+    let m = re.exec(code);
 
     return (sourceFileName || "") + (m && m[1] || nonce());
 };
 
-/**
- * Process the babel options to adapt the options to avoid some issue after transformation.
- * @param   {Object} options current options for babel
- * @param   {String} code    code associated
- * @returns {Object} options really used during transformation
- */
-var processOptions = function(options, code) {
-    var rst = JSON.parse(JSON.stringify(options)); // Let's clone options
 
-    // In the case were source maps are activated, we need to make some verifications
 
-    if (rst.sourceMaps) {
+/* processOptions
+---------------------------------------------*/
+let processOptions = function(options, code) {
+    let rst = JSON.parse(JSON.stringify(options)); // Let's clone options
 
-        // 1. If we're processing a block of code, we need to ensure that the block will have a specific source name
-        if (code) {
-            rst.sourceFileName = processSourceFileName(rst.sourceFileName, code);
-        }
+    // 1. enable sourcemaps by default
+    rst.sourceMaps = true;
 
-        // 2. If the sourceMap options equals to "inline" or "both", we need to set it to true before processing babel transform
-        // otherwize, the sourceMapUrl will be added by babel to the generated code of each file / block of code.
-        // We will take care to handle the "inline" or "both" specification when the concatenated code has been fully generated
-        if (rst.sourceMaps === "inline" || rst.sourceMaps === "both") {
-            rst.sourceMaps = true;
-        }
-
-        // 3. disable comments by default, hence soursemaps can't handle them
-        rst.comments = false;
+    // 2. If we're processing a block of code, we need to ensure that the block will have a specific source name
+    if (code) {
+        rst.sourceFileName = processSourceFileName(rst.sourceFileName, code);
     }
 
     return rst;
 };
 
-/**
- * Same as transform from babel except that you give a list of code blocks.
- * @param   {Array}  codeBlocks list of code blocks
- * @param   {Object} options    see babel options
- * @returns {Object} return an object with the code and map of all codes
- */
-exports.transform = function(codeBlocks, options) {
-    var babelResults = [];
 
-    codeBlocks.forEach(function(block) {
-        var babelResult = babel.transform(block, processOptions(options, block));
-        babelResults.push(babelResult);
+
+/* transform
+---------------------------------------------*/
+exports.transform = function(files, options) {
+    let theSourceNodes = [];
+
+    files.forEach(function(file) {
+        let theOutput = babel.transform(file, processOptions(options, file));
+
+        let theScript = theOutput.code;
+        let theSourceMap = theOutput.map;
+        
+        let theSourceMapConsumer = new SourceMapConsumer(theSourceMap);
+		let theGeneratedNode = SourceNode.fromStringWithSourceMap(theScript, theSourceMapConsumer);
+
+		theSourceNodes.push(theGeneratedNode);
     });
 
-    return exports.babelConcat(babelResults, options);
+    return exports.babelConcat(theSourceNodes, options);
 };
 
-/**
- * Same as transformFile from babel with mutilple files.
- * @param {Array}    files    all files to transform
- * @param {Object}   options  see babel options
- * @param {Function} callback call the function after transform with parameter
- *                            an object with the code and map of all files
- */
+
+
+/* transformFile
+---------------------------------------------*/
 exports.transformFile = function(files, options, callback) {
-    var deferredResults = [];
+    let deferredResults = [];
+    let theSourceNodes = [];
+    let theOptions = processOptions(options);
+
     files.forEach(function(file) {
-        var promise = new Promise(function(resolve) {
-            babel.transformFile(file, processOptions(options), function(e, r) {
-                resolve(r);
+        let promise = new Promise(function(resolve) {
+            let thePath = file;
+            let theOutput = babel.transformFile(thePath, theOptions, function(err, result) {
+
+                let theScript = result.code;
+                let theSourceMap = result.map;
+                
+                let theSourceMapConsumer = new SourceMapConsumer(theSourceMap);
+                let theGeneratedNode = SourceNode.fromStringWithSourceMap(theScript, theSourceMapConsumer);
+
+                theSourceNodes.push(theGeneratedNode);
+                resolve();
             });
         });
+
         deferredResults.push(promise);
     });
 
-    Promise.all(deferredResults).then(function(babelResults) {
-        callback(exports.babelConcat(babelResults, options));
+    Promise.all(deferredResults).then(function() {
+        callback(exports.babelConcat(theSourceNodes, options));
     });
 };
 
-/**
- * Same as transformFileSync from babel with mutilple files.
- * @param   {Array}  files   all files to transform
- * @param   {Object} options see babel options
- * @returns {Object} return an object with the code and map of all files
- */
+
+
+/* transformFileSync
+---------------------------------------------*/
 exports.transformFileSync = function(files, options) {
-    var babelResults = [];
+    let theSourceNodes = [];
+    let theOptions = processOptions(options);
 
     files.forEach(function(file) {
-        var babelResult = babel.transformFileSync(file, processOptions(options));
-        babelResults.push(babelResult);
+        let thePath = file;
+        let theOutput = babel.transformFileSync(thePath, theOptions);
+
+        let theScript = theOutput.code;
+        let theSourceMap = theOutput.map;
+        
+        let theSourceMapConsumer = new SourceMapConsumer(theSourceMap);
+		let theGeneratedNode = SourceNode.fromStringWithSourceMap(theScript, theSourceMapConsumer);
+
+		theSourceNodes.push(theGeneratedNode);
     });
 
-    return exports.babelConcat(babelResults, options);
+    return exports.babelConcat(theSourceNodes, options);
 };
 
-/**
- * Concat all result with code and map from babel transform.
- * @param   {Array}  babelResults all results from babel an array of
- *                              object contain code and map
- * @param   {Object} options      options see babel options
- * @returns {Object} return an object with the code and map of all results
- */
-exports.babelConcat = function(babelResults, options) {
 
-    var map = new SourceMapGenerator();
-    var lastLine = 0;
 
-    var concactMap = function(mapConsumer, offset) {
+/* The Concat
+---------------------------------------------*/
+exports.babelConcat = function(theSourceNodes, options) {
 
-        mapConsumer.eachMapping(function(callback) {
-            map.addMapping({
-                source: callback.source,
-                original: {
-                    line: callback.originalLine,
-                    column: callback.originalColumn
-                },
-                generated: {
-                    line: offset + callback.generatedLine,
-                    column: callback.generatedColumn
-                },
-                name: callback.name
-            });
+    const theSourceNodeTree = new SourceNode(null, null, null, theSourceNodes).toStringWithSourceMap();
+    const theCode = theSourceNodeTree.code;
+    const theMappings = theSourceNodeTree.map.toString();
 
-            lastLine = offset + callback.generatedLine;
-        });
+    const theBase64Map = Buffer.from(theMappings).toString("base64");
+    const theEncodedSourceMap = "//# " + "sourceMappingURL=data:application/json;base64," + theBase64Map;
+
+    const theFileContents = options.sourceMaps ? theCode + "\n" + theEncodedSourceMap : theCode;
+    const theResult = {
+        map: theSourceNodeTree.map,
+        code: theFileContents
     };
 
-    var concatContent = function(mapConsumer) {
-        var sources = mapConsumer.sources;
-        var contents = mapConsumer.sourcesContent;
-
-        for (var i = 0, l = sources.length; i < l; i++) {
-            map.setSourceContent(sources[i], contents[i]);
-        }
-    };
-
-    var codes = "";
-    var concatCode = function(code) {
-        codes += code + "\n";
-    };
-
-    babelResults.forEach(function(result) {
-        if (result.map) {
-            var mapConsumer = new SourceMapConsumer(result.map);
-
-            concactMap(mapConsumer, lastLine);
-            concatContent(mapConsumer);
-        }
-
-        concatCode(result.code);
-    });
-
-    return {
-        map: map,
-        code: options.sourceMaps ? exports.addSourceMapUrlData(codes, map) : codes
-    };
-};
-
-/**
- * Insert the source map as data in the code.
- * @param   {String} code code where insert the source map
- * @param   {Object} map  map represents the source map for the code
- * @returns {String} the code with the source map data
- */
-exports.addSourceMapUrlData = function(code, map) {
-    var mapString = map.toString();
-    var mapBase64 = Buffer.from(mapString).toString("base64");
-    var mapData = "//# " + "sourceMappingURL=data:application/json;base64," + mapBase64;
-
-    return code + "\n" + mapData;
-};
-
-/**
- * Insert the source map as url in the code
- * @param   {String} code code where insert the source map
- * @param   {String} url  url to find the source map
- * @returns {String} the code with the source map url
- */
-exports.addSourceMapUrl = function(code, url) {
-    return code + "//# " + "sourceMappingURL=" + url;
+    return theResult;
 };
