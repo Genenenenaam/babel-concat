@@ -1,9 +1,7 @@
 # babel-concat-sourcemaps
-Use to concat JS files with sourcemap after babel transformation.
-
-The apis (see API) take a list of files (or blocks of code) instead of a single one and process all the list to return a babel-like object ({code:..., map:...}):
-- code attribute contains: The concatenation of all compiled code blocks. (Sourcemap is inlined if the source-maps option has been set to true)
-- map attribute contains: The RAW source map object which is the concatenation of each source-map of each given file (or block of code).
+Use this plugin to pass an [Array of file path's], or an [Array of file contents] to one of Babel's transform methods. And the result will return an {Object} with two keys: 
+- *{code: ... }* containing your processed & concatenated code. With inlined sourcemap if you have set the Babel option '**sourcemaps: true**'.
+- *{map: ... }* containing the RAW source map object which is the concatenation of each source-map of each given file (or file contents).
 
 
 Installation
@@ -14,10 +12,32 @@ Installation
 ```js
 const concat = require("babel-concat-sourcemaps");
 
+
 Usage example :
-const result = concat.transformFileSync([path1, path2, ..., pathN], options)
-result.code // returns the concatenation of file1, file2, ..., fileN after they have been processed by Babel (Sourcemap is inlined if the source-maps option has been set to true)
+
+const result = concat.transformFileSync([path1, path2, ..., pathN], options);
+result.code // returns the concatenation of file1, file2, ..., fileN after they have been processed by Babel (Sourcemap is inlined if the babel option has been set to true)
 result.map // returns the RAW source map object which is the concatenation of each source-map of each given file (or block of code).
+
+
+Babel options example:
+
+const result = concat.transformFileSync([path1, ..., pathN], {
+  "presets": [
+    ["@babel/preset-env", { 
+      "targets": { 
+        "browsers": [
+          "> 1%",
+          "last 2 versions",
+          "not ie < 11"
+        ]
+      } 
+    }]
+  ],
+  "sourceMaps": true,
+  "minified": false,
+  "comments": false
+});
 ```
 
 API
